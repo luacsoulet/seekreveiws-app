@@ -5,7 +5,30 @@ export interface User {
     id: number
     username: string
     email: string
+    is_admin: boolean
     description?: string
+}
+
+function decodeJWT(token: string): User | null {
+    try {
+        const parts = token.split('.')
+        if (parts.length !== 3) return null
+
+        const payload = parts[1]
+        const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
+        const parsedPayload = JSON.parse(decoded)
+
+        return {
+            id: parsedPayload.id,
+            username: parsedPayload.username,
+            email: parsedPayload.email,
+            is_admin: parsedPayload.is_admin,
+            description: parsedPayload.description,
+        }
+    } catch (error) {
+        console.error('Erreur lors du décodage du token:', error)
+        return null
+    }
 }
 
 interface AuthState {
@@ -13,8 +36,11 @@ interface AuthState {
     token: string | null
     isAuthenticated: boolean
     login: (user: User, token: string) => void
+    loginWithToken: (token: string) => void
     logout: () => void
     updateUser: (user: Partial<User>) => void
+    setToken: (token: string) => void
+    isAdmin: () => boolean
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -29,6 +55,16 @@ export const useAuthStore = create<AuthState>()(
                     token,
                     isAuthenticated: true,
                 })
+            },
+            loginWithToken: (token: string) => {
+                const user = decodeJWT(token)
+                if (user) {
+                    set({
+                        user,
+                        token,
+                        isAuthenticated: true,
+                    })
+                }
             },
             logout: () => {
                 set({
@@ -45,9 +81,21 @@ export const useAuthStore = create<AuthState>()(
                     })
                 }
             },
+            setToken: (token: string) => {
+                set({ token })
+            },
+            isAdmin: () => {
+                const currentUser = get().user
+                return currentUser?.is_admin ?? false
+            },
         }),
         {
             name: 'auth-storage',
+            partialize: (state) => ({
+                user: state.user,
+                token: state.token,
+                isAuthenticated: state.isAuthenticated
+            }),
         }
     )
 ) 
