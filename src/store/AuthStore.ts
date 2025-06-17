@@ -9,6 +9,28 @@ export interface User {
     description?: string
 }
 
+function decodeJWT(token: string): User | null {
+    try {
+        const parts = token.split('.')
+        if (parts.length !== 3) return null
+
+        const payload = parts[1]
+        const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
+        const parsedPayload = JSON.parse(decoded)
+
+        return {
+            id: parsedPayload.id,
+            username: parsedPayload.username,
+            email: parsedPayload.email,
+            is_admin: parsedPayload.is_admin,
+            description: parsedPayload.description,
+        }
+    } catch (error) {
+        console.error('Erreur lors du décodage du token:', error)
+        return null
+    }
+}
+
 interface AuthState {
     user: User | null
     token: string | null
