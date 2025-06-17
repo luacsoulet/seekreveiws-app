@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAuthStore, User } from '@/store/AuthStore'
-import { Movie } from './types'
+import { Book, Movie } from './types'
 
 export function useLogin() {
     const [error, setError] = useState<string | null>(null)
@@ -24,13 +24,13 @@ export function useLogin() {
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.message || 'Erreur de connexion')
+                throw new Error(data.message || 'Error while fetching books')
             }
 
             loginStore(data.user, data.token)
             return data
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Erreur de connexion'
+            const errorMessage = err instanceof Error ? err.message : 'Error while fetching books'
             setError(errorMessage)
             throw err
         } finally {
@@ -64,7 +64,7 @@ export function useRegister() {
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.message || 'Erreur lors de l\'inscription')
+                throw new Error(data.message || 'Error while fetching books')
             }
 
             setUser(data.user)
@@ -85,7 +85,7 @@ export function useRegister() {
 
             return data
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Erreur lors de l\'inscription'
+            const errorMessage = err instanceof Error ? err.message : 'Error while fetching books'
             setError(errorMessage)
             throw err
         } finally {
@@ -110,12 +110,12 @@ export function useMovies() {
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.message || 'Erreur lors de la récupération des films')
+                throw new Error(data.message || 'Error while fetching movies')
             }
 
             setMovies(data)
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la récupération des films'
+            const errorMessage = err instanceof Error ? err.message : 'Error while fetching movies'
             setError(errorMessage)
             throw err
         } finally {
@@ -124,4 +124,33 @@ export function useMovies() {
     }
 
     return { movies, loading, error, getMovies }
+}
+export function useBooks() {
+    const [books, setBooks] = useState<Book[]>([])
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+
+    const getBooks = async () => {
+        setLoading(true)
+        setError(null)
+
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books`)
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Error while fetching books')
+            }
+
+            setBooks(data)
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Error while fetching books'
+            setError(errorMessage)
+            throw err
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return { books, loading, error, getBooks }
 }
