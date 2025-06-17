@@ -42,9 +42,12 @@ export const NavBar = () => {
                     <li><Link className="btn btn-ghost rounded-lg flex gap-2 p-4 hover:bg-gray-500/20 hover:scale-105 active:scale-95 transition-all duration-300" href="#About-section">Books <BookOpenText /></Link></li>
                 </ul>
                 {isAuthenticated ? (
-                    <Link className="btn btn-ghost border-2 border-secondary rounded-full flex gap-2 p-4 hover:bg-secondary hover:text-black text-bold hover:scale-105 active:scale-95 transition-all duration-300" href="#About-section">My Account <User /></Link>
+                    <>
+                        <Link className="btn btn-ghost border-2 border-secondary rounded-full flex gap-2 p-4 hover:bg-secondary hover:text-black text-bold hover:scale-105 active:scale-95 transition-all duration-300" href="/account">My Account <User /></Link>
+                        <button className="btn btn-ghost border-2 border-secondary rounded-full flex gap-2 p-4 hover:bg-secondary hover:text-black text-bold hover:scale-105 active:scale-95 transition-all duration-300" onClick={logout}>Logout <LogOut /></button>
+                    </>
                 ) : (
-                    <Link className="btn btn-ghost border-2 border-secondary rounded-full flex gap-2 p-4 hover:bg-secondary hover:text-black text-bold hover:scale-105 active:scale-95 transition-all duration-300" href="#About-section">Login <LogIn /></Link>
+                    <Link className="btn btn-ghost border-2 border-secondary rounded-full flex gap-2 p-4 hover:bg-secondary hover:text-black text-bold hover:scale-105 active:scale-95 transition-all duration-300" href="/auth">Login <LogIn /></Link>
                 )}
             </div>
         </div>
