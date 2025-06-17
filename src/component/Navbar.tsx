@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useAuthStore } from "@/store/useAuthStore";
+import { useAuthStore } from "@/store/AuthStore";
 import { LogIn, LogOut, Home, BookOpenText, Film, User } from "lucide-react";
 
 export const NavBar = () => {
