@@ -53,7 +53,7 @@ export const BookCard = ({ book }: { book: Book }) => {
                         </p>
                         <div className="flex justify-between items-center text-xs text-white/70">
                             <span>Written by {book.author}</span>
-                            <span>{new Date(book.release_date).getFullYear()}</span>
+                            <span>{new Date(book.publish_date).getFullYear()}</span>
                         </div>
                     </div>
                 </motion.div>
