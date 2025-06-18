@@ -17,6 +17,6 @@ export interface Book {
     genre: string
     cover_image: string
     avg_rating: number
-    release_date: string,
+    publish_date: string,
     created_at: string,
 }

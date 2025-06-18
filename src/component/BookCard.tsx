@@ -11,6 +11,7 @@ export const BookCard = ({ book }: { book: Book }) => {
             className="group relative w-64 h-96 rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-2xl active:scale-100"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
+            href={`/books/${book.id}`}
         >
             <Image
                 src={book.cover_image}
@@ -53,7 +54,7 @@ export const BookCard = ({ book }: { book: Book }) => {
                         </p>
                         <div className="flex justify-between items-center text-xs text-white/70">
                             <span>Written by {book.author}</span>
-                            <span>{new Date(book.release_date).getFullYear()}</span>
+                            <span>{new Date(book.publish_date).getFullYear()}</span>
                         </div>
                     </div>
                 </motion.div>

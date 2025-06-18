@@ -24,13 +24,13 @@ export function useLogin() {
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.message || 'Erreur de connexion')
+                throw new Error(data.message || 'Error while fetching books')
             }
 
             loginStore(data.user, data.token)
             return data
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Erreur de connexion'
+            const errorMessage = err instanceof Error ? err.message : 'Error while fetching books'
             setError(errorMessage)
             throw err
         } finally {
@@ -64,7 +64,7 @@ export function useRegister() {
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.message || 'Erreur lors de l\'inscription')
+                throw new Error(data.message || 'Error while fetching books')
             }
 
             setUser(data.user)
@@ -85,7 +85,7 @@ export function useRegister() {
 
             return data
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Erreur lors de l\'inscription'
+            const errorMessage = err instanceof Error ? err.message : 'Error while fetching books'
             setError(errorMessage)
             throw err
         } finally {
@@ -110,12 +110,12 @@ export function useMovies(limit: number = 20) {
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.message || 'Erreur lors de la récupération des films')
+                throw new Error(data.message || 'Error while fetching movies')
             }
 
             setMovies(data)
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la récupération des films'
+            const errorMessage = err instanceof Error ? err.message : 'Error while fetching movies'
             setError(errorMessage)
             throw err
         } finally {
@@ -136,6 +136,7 @@ export function useBooks(limit: number = 20) {
 
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books?limit=${limit}`)
+            
             const data = await response.json()
 
             if (!response.ok) {
