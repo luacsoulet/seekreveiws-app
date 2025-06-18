@@ -96,7 +96,7 @@ export function useRegister() {
     return { register, error, loading, user }
 }
 
-export function useMovies() {
+export function useMovies(limit: number = 20) {
     const [movies, setMovies] = useState<Movie[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -106,7 +106,7 @@ export function useMovies() {
         setError(null)
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/movies`)
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/movies?limit=${limit}`)
             const data = await response.json()
 
             if (!response.ok) {
@@ -125,7 +125,7 @@ export function useMovies() {
 
     return { movies, loading, error, getMovies }
 }
-export function useBooks() {
+export function useBooks(limit: number = 20) {
     const [books, setBooks] = useState<Book[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -135,7 +135,8 @@ export function useBooks() {
         setError(null)
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books`)
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books?limit=${limit}`)
+            
             const data = await response.json()
 
             if (!response.ok) {

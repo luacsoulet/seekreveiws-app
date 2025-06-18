@@ -5,16 +5,13 @@ import { MovieCard } from "@/component/MovieCard";
 import { BookCard } from "@/component/BookCard";
 
 export default function Home() {
-  const { movies, loading: moviesLoading, error: moviesError, getMovies } = useMovies()
-  const { books, loading: booksLoading, error: booksError, getBooks } = useBooks()
+  const { movies, loading: moviesLoading, error: moviesError, getMovies } = useMovies(5)
+  const { books, loading: booksLoading, error: booksError, getBooks } = useBooks(5)
 
   useEffect(() => {
     getMovies()
     getBooks()
   }, [])
-
-  console.table(movies)
-  console.table(books)
 
   return (
     <div className="flex flex-col gap-8 items-center justify-center h-full mt-[20vh]">
