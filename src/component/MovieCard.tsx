@@ -11,6 +11,7 @@ export const MovieCard = ({ movie }: { movie: Movie }) => {
             className="group relative w-64 h-96 rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-2xl active:scale-100"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
+            href={`/movies/${movie.id}`}
         >
             <Image
                 src={movie.cover_image}
