@@ -38,8 +38,8 @@ export const NavBar = () => {
             <div className="flex gap-2 items-center">
                 <ul className="flex bg-gray-500/10 backdrop-blur-sm rounded-full overflow-hidden">
                     <li><Link className="btn btn-ghost rounded-lg flex items-center gap-2 p-4 hover:bg-gray-500/40 hover:scale-105 active:scale-95 transition-all duration-300" href="/">Home <Home /></Link></li>
-                    <li><Link className="btn btn-ghost rounded-lg flex gap-2 p-4 hover:bg-gray-500/20 hover:scale-105 active:scale-95 transition-all duration-300" href="#Portfolio-section">Movies <Film /></Link></li>
-                    <li><Link className="btn btn-ghost rounded-lg flex gap-2 p-4 hover:bg-gray-500/20 hover:scale-105 active:scale-95 transition-all duration-300" href="#About-section">Books <BookOpenText /></Link></li>
+                    <li><Link className="btn btn-ghost rounded-lg flex gap-2 p-4 hover:bg-gray-500/20 hover:scale-105 active:scale-95 transition-all duration-300" href="/movies">Movies <Film /></Link></li>
+                    <li><Link className="btn btn-ghost rounded-lg flex gap-2 p-4 hover:bg-gray-500/20 hover:scale-105 active:scale-95 transition-all duration-300" href="/books">Books <BookOpenText /></Link></li>
                 </ul>
                 {isAuthenticated ? (
                     <>

@@ -136,7 +136,7 @@ export function useBooks(limit: number = 20) {
 
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books?limit=${limit}`)
-            
+
             const data = await response.json()
 
             if (!response.ok) {
