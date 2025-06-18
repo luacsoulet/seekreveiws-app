@@ -154,3 +154,63 @@ export function useBooks() {
 
     return { books, loading, error, getBooks }
 }
+
+export function useBook(id: string) {
+    const [book, setBook] = useState<Book | null>(null)
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+
+    const getBook = async () => {
+        setLoading(true)
+        setError(null)
+
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books/${id}`)
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Error while fetching movies')
+            }
+
+            setBook(data)
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Error while fetching movies'
+            setError(errorMessage)
+            throw err
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return { book, loading, error, getBook }
+}
+
+export function useMovie(id: string) {
+    const [movie, setMovie] = useState<Movie | null>(null)
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+
+    const getMovie = async () => {
+        setLoading(true)
+        setError(null)
+
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/movies/${id}`)
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Error while fetching movies')
+            }
+
+            setMovie(data)
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Error while fetching movies'
+            setError(errorMessage)
+            throw err
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return { movie, loading, error, getMovie }
+}
