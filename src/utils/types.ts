@@ -20,3 +20,12 @@ export interface Book {
     publish_date: string,
     created_at: string,
 }
+
+export interface Comment {
+    id: number
+    message: string
+    user_id: number
+    created_at: string
+    book_id?: number
+    movie_id?: number
+}

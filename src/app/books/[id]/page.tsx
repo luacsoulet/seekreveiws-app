@@ -1,15 +1,21 @@
 "use client"
 
-import { useBook } from "@/utils/apiFunctions"
+import { useBook, useAddComment, useComments } from "@/utils/apiFunctions"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import Image from "next/image"
 import { motion, AnimatePresence, Variants } from "framer-motion"
-import { Star, Loader2, Eye, EyeOff, Heart, HeartOff } from "lucide-react"
+import { Star, Loader2, Eye, EyeOff, Heart, HeartOff, Send, MessageSquare } from "lucide-react"
+import { useAuthStore } from "@/store/AuthStore"
+import { CommentSection } from "@/component/CommentSection"
 
 export default function BookPage() {
     const { id } = useParams()
+    const { user, token, isAuthenticated } = useAuthStore()
     const { book, loading, error, getBook } = useBook(id as string)
+    const { comments, loading: commentsLoading, error: commentsError, getComments } = useComments()
+
+    const [newComment, setNewComment] = useState("")
     const [isRatingMode, setIsRatingMode] = useState(false)
     const [userRating, setUserRating] = useState(0)
     const [hoveredStar, setHoveredStar] = useState(0)
@@ -17,10 +23,15 @@ export default function BookPage() {
     const [isFavorite, setIsFavorite] = useState(false)
     const [isSeen, setIsSeen] = useState(false)
 
+    const { addComment, loading: addCommentLoading, error: addCommentError } = useAddComment()
+
     useEffect(() => {
         getBook()
+        getComments(false, true, id as string)
     }, [id])
 
+    console.table(book)
+    console.table(comments)
     const handleStarClick = (rating: number) => {
         if (isRatingMode) {
             setUserRating(rating)
@@ -53,6 +64,19 @@ export default function BookPage() {
     const handleToggleSeen = () => {
         setIsSeen(!isSeen)
         console.log(`Book ${isSeen ? 'marked as not read' : 'marked as read'}: ${book?.title}`)
+    }
+
+    const handleSubmitComment = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (newComment.trim() && isAuthenticated) {
+            try {
+                await addComment(null, book?.id || null, user?.id || 0, newComment, token || "")
+                getComments(false, true, id as string)
+                setNewComment("")
+            } catch (error) {
+                console.error("Error submitting comment:", error)
+            }
+        }
     }
 
     const renderStars = () => {
@@ -144,7 +168,7 @@ export default function BookPage() {
             initial="hidden"
             animate="visible"
             variants={containerVariants}
-            className="flex items-center justify-center min-h-screen p-8"
+            className="flex flex-col items-center min-h-screen p-8 mt-40"
         >
             <div className="flex gap-8 max-w-6xl w-full items-center">
                 <motion.div
@@ -290,6 +314,19 @@ export default function BookPage() {
                     </div>
                 </motion.div>
             </div>
+
+            <CommentSection
+                comments={comments || []}
+                commentsLoading={commentsLoading}
+                commentsError={commentsError || ""}
+                handleSubmitComment={handleSubmitComment}
+                newComment={newComment}
+                setNewComment={setNewComment}
+                isAuthenticated={isAuthenticated}
+                itemVariants={itemVariants}
+                addCommentLoading={addCommentLoading}
+                addCommentError={addCommentError}
+            />
         </motion.div>
     )
 }
