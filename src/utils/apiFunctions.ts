@@ -2,17 +2,56 @@ import { useState } from 'react'
 import { useAuthStore, User } from '@/store/AuthStore'
 import { Book, Comment, Movie } from './types'
 
+
+export const handleApiError = (type: string, response: Response) => {
+    if (!response.ok) {
+        const errorMessages: Record<number, string> = {
+            400: "Bad request",
+            401: "Invalid credentials",
+            403: "Forbidden access",
+            404: `${type.charAt(0).toUpperCase() + type.slice(1)} not found`,
+            500: "Internal server error"
+        }
+        const message = errorMessages[response.status] || `Error while fetching ${type}`
+        throw new Error(message)
+    }
+}
+
 export function useLogin() {
     const [error, setError] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+    const [authError, setAuthError] = useState<string | null>(null)
 
     const { login: loginStore } = useAuthStore()
+
+    const errorMessages: Record<string, string> = {
+        "!email": "Email is required",
+        "!password": "Password is required",
+    }
+
+    const validateFields = (email: string, password: string) => {
+        const errors: Record<string, string> = {}
+        if (!email) errors.email = errorMessages["!email"]
+        if (!password) errors.password = errorMessages["!password"]
+        setFieldErrors(errors)
+        return Object.keys(errors).length === 0
+    }
 
     const login = async (email: string, password: string) => {
         setLoading(true)
         setError(null)
+        setAuthError(null)
 
         try {
+            const isValid = validateFields(email, password)
+
+            if (!isValid) {
+                setLoading(false)
+                setError("Please check the form fields")
+                return null
+            }
+
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
                 method: 'POST',
                 headers: {
@@ -24,13 +63,18 @@ export function useLogin() {
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.message || 'Error while fetching books')
+                if (response.status === 401) {
+                    setAuthError("Invalid credentials. Please check your email and password.")
+                    setLoading(false)
+                    return null
+                }
+                handleApiError("user", response)
             }
 
             loginStore(data.user, data.token)
             return data
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Error while fetching books'
+            const errorMessage = err instanceof Error ? err.message : 'Error while fetching user'
             setError(errorMessage)
             throw err
         } finally {
@@ -38,21 +82,47 @@ export function useLogin() {
         }
     }
 
-    return { login, error, loading }
+    return { login, error, loading, fieldErrors, authError }
 }
 
 export function useRegister() {
     const [error, setError] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
     const [user, setUser] = useState<User | null>(null)
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+    const [authError, setAuthError] = useState<string | null>(null)
 
     const { login } = useAuthStore()
+
+    const errorMessages: Record<string, string> = {
+        "!username": "Username is required",
+        "!email": "Email is required",
+        "!password": "Password is required"
+    }
+
+    const validateFields = (username: string, email: string, password: string) => {
+        const errors: Record<string, string> = {}
+        if (!username) errors.username = errorMessages["!username"]
+        if (!email) errors.email = errorMessages["!email"]
+        if (!password) errors.password = errorMessages["!password"]
+        setFieldErrors(errors)
+        return Object.keys(errors).length === 0
+    }
 
     const register = async (username: string, email: string, password: string) => {
         setLoading(true)
         setError(null)
+        setAuthError(null)
 
         try {
+            const isValid = validateFields(username, email, password)
+
+            if (!isValid) {
+                setLoading(false)
+                setError("Please check the form fields")
+                return null
+            }
+
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
                 method: 'POST',
                 headers: {
@@ -64,7 +134,12 @@ export function useRegister() {
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.message || 'Error while fetching books')
+                if (response.status === 409) {
+                    setAuthError("This email is already in use. Please choose a different one.")
+                    setLoading(false)
+                    return null
+                }
+                throw new Error(data.message || 'Error while fetching user')
             }
 
             setUser(data.user)
@@ -85,7 +160,7 @@ export function useRegister() {
 
             return data
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Error while fetching books'
+            const errorMessage = err instanceof Error ? err.message : 'Error while fetching user'
             setError(errorMessage)
             throw err
         } finally {
@@ -93,7 +168,7 @@ export function useRegister() {
         }
     }
 
-    return { register, error, loading, user }
+    return { register, error, loading, user, fieldErrors, authError }
 }
 
 export function useMovies(limit: number = 20) {
@@ -109,9 +184,7 @@ export function useMovies(limit: number = 20) {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/movies?limit=${limit}`)
             const data = await response.json()
 
-            if (!response.ok) {
-                throw new Error(data.message || 'Error while fetching movies')
-            }
+            handleApiError("movies", response)
 
             setMovies(data)
         } catch (err) {
@@ -140,9 +213,7 @@ export function useBooks(limit: number = 20) {
 
             const data = await response.json()
 
-            if (!response.ok) {
-                throw new Error(data.message || 'Error while fetching books')
-            }
+            handleApiError("books", response)
 
             setBooks(data)
         } catch (err) {
@@ -170,9 +241,7 @@ export function useBook(id: string) {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books/${id}`)
             const data = await response.json()
 
-            if (!response.ok) {
-                throw new Error(data.message || 'Error while fetching movies')
-            }
+            handleApiError("book", response)
 
             setBook(data)
         } catch (err) {
@@ -200,9 +269,7 @@ export function useMovie(id: string) {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/movies/${id}`)
             const data = await response.json()
 
-            if (!response.ok) {
-                throw new Error(data.message || 'Error while fetching movies')
-            }
+            handleApiError("movie", response)
 
             setMovie(data)
         } catch (err) {
@@ -230,9 +297,7 @@ export const useMovieComments = () => {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/comments/movie?${id}`)
             const data = await response.json()
 
-            if (!response.ok) {
-                throw new Error(data.message || 'Error while fetching comments')
-            }
+            handleApiError("comments", response)
 
             setComments(data)
         } catch (err) {
@@ -262,9 +327,7 @@ export const useComments = () => {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/comments/${endpoint}?${paramName}=${id}`)
             const data = await response.json()
 
-            if (!response.ok) {
-                throw new Error(data.message || 'Error while fetching comments')
-            }
+            handleApiError("comments", response)
 
             setComments(data)
         } catch (err) {
@@ -282,34 +345,40 @@ export const useComments = () => {
 export const useAddComment = () => {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+
+    const errorMessages: Record<string, string> = {
+        "!token": "Authentication token is missing",
+        "!userId": "User ID is missing",
+        "!message.trim()": "Comment message cannot be empty",
+        "!bookId && !movieId": "Either book ID or movie ID must be provided"
+    }
+
+    const validateFields = (movieId: number | null, bookId: number | null, userId: number, message: string, token: string) => {
+        const errors: Record<string, string> = {}
+
+        if (!token) errors.token = errorMessages["!token"]
+        if (!userId) errors.userId = errorMessages["!userId"]
+        if (!message.trim()) errors.message = errorMessages["!message.trim()"]
+        if (!bookId && !movieId) errors.id = errorMessages["!bookId && !movieId"]
+
+        setFieldErrors(errors)
+
+        return Object.keys(errors).length === 0
+    }
 
     const addComment = async (movieId: number | null, bookId: number | null, userId: number, message: string, token: string) => {
         setLoading(true)
         setError(null)
+        setFieldErrors({})
 
         try {
-            if (!token) {
-                setError("Authentication token is missing");
-                setLoading(false);
-                return;
-            }
+            const isValid = validateFields(movieId, bookId, userId, message, token)
 
-            if (!userId) {
-                setError("User ID is missing");
-                setLoading(false);
-                return;
-            }
-
-            if (!message.trim()) {
-                setError("Comment message cannot be empty");
-                setLoading(false);
-                return;
-            }
-
-            if (!bookId && !movieId) {
-                setError("Either book ID or movie ID must be provided");
-                setLoading(false);
-                return;
+            if (!isValid) {
+                setLoading(false)
+                setError("Please check the form fields")
+                return null
             }
 
             const url = `${process.env.NEXT_PUBLIC_API_URL}/comments`;
@@ -364,5 +433,33 @@ export const useAddComment = () => {
         }
     }
 
-    return { addComment, loading, error }
+    return { addComment, loading, error, fieldErrors }
+}
+
+export const useUser = () => {
+    const [user, setUser] = useState<User | null>(null)
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+
+    const getUser = async (id: string) => {
+        setLoading(true)
+        setError(null)
+
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${id}`)
+            const data = await response.json()
+
+            handleApiError("user", response)
+
+            setUser(data)
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Error while fetching user'
+            setError(errorMessage)
+            throw err
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return { user, loading, error, getUser }
 }

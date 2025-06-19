@@ -23,7 +23,7 @@ export default function MoviePage() {
     const [isFavorite, setIsFavorite] = useState(false)
     const [isSeen, setIsSeen] = useState(false)
 
-    const { addComment, loading: addCommentLoading, error: addCommentError } = useAddComment()
+    const { addComment, loading: addCommentLoading, error: addCommentError, fieldErrors } = useAddComment()
 
     useEffect(() => {
         getMovie()
@@ -324,6 +324,7 @@ export default function MoviePage() {
                 itemVariants={itemVariants}
                 addCommentLoading={addCommentLoading}
                 addCommentError={addCommentError}
+                fieldErrors={fieldErrors}
             />
         </motion.div>
     )
