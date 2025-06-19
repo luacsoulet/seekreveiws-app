@@ -1,15 +1,21 @@
 "use client"
 
-import { useMovie } from "@/utils/apiFunctions"
+import { useMovie, useAddComment, useComments } from "@/utils/apiFunctions"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import Image from "next/image"
 import { motion, AnimatePresence, Variants } from "framer-motion"
 import { Star, Loader2, Eye, EyeOff, Heart, HeartOff } from "lucide-react"
+import { useAuthStore } from "@/store/AuthStore"
+import { CommentSection } from "@/component/CommentSection"
 
 export default function MoviePage() {
     const { id } = useParams()
+    const { user, token, isAuthenticated } = useAuthStore()
     const { movie, loading, error, getMovie } = useMovie(id as string)
+    const { comments, loading: commentsLoading, error: commentsError, getComments } = useComments()
+
+    const [newComment, setNewComment] = useState("")
     const [isRatingMode, setIsRatingMode] = useState(false)
     const [userRating, setUserRating] = useState(0)
     const [hoveredStar, setHoveredStar] = useState(0)
@@ -17,8 +23,11 @@ export default function MoviePage() {
     const [isFavorite, setIsFavorite] = useState(false)
     const [isSeen, setIsSeen] = useState(false)
 
+    const { addComment, loading: addCommentLoading, error: addCommentError } = useAddComment()
+
     useEffect(() => {
         getMovie()
+        getComments(true, false, id as string)
     }, [id])
 
     const handleStarClick = (rating: number) => {
@@ -53,6 +62,19 @@ export default function MoviePage() {
     const handleToggleSeen = () => {
         setIsSeen(!isSeen)
         console.log(`Movie ${isSeen ? 'marked as not seen' : 'marked as seen'}: ${movie?.title}`)
+    }
+
+    const handleSubmitComment = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (newComment.trim() && isAuthenticated) {
+            try {
+                await addComment(movie?.id || null, null, user?.id || 0, newComment, token || "")
+                getComments(true, false, id as string)
+                setNewComment("")
+            } catch (error) {
+                console.error("Error submitting comment:", error)
+            }
+        }
     }
 
     const renderStars = () => {
@@ -144,7 +166,7 @@ export default function MoviePage() {
             initial="hidden"
             animate="visible"
             variants={containerVariants}
-            className="flex items-center justify-center min-h-screen p-8"
+            className="flex flex-col items-center min-h-screen p-8 mt-40"
         >
             <div className="flex gap-8 max-w-6xl w-full items-center">
                 <motion.div
@@ -290,6 +312,19 @@ export default function MoviePage() {
                     </div>
                 </motion.div>
             </div>
+
+            <CommentSection
+                comments={comments || []}
+                commentsLoading={commentsLoading}
+                commentsError={commentsError || ""}
+                handleSubmitComment={handleSubmitComment}
+                newComment={newComment}
+                setNewComment={setNewComment}
+                isAuthenticated={isAuthenticated}
+                itemVariants={itemVariants}
+                addCommentLoading={addCommentLoading}
+                addCommentError={addCommentError}
+            />
         </motion.div>
     )
 }
