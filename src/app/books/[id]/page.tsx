@@ -1,6 +1,6 @@
 "use client"
 
-import { useBook, useAddComment, useComments } from "@/utils/apiFunctions"
+import { useBook, useAddComment, useComments, useUserAddSeen, useUserRemoveSeen } from "@/utils/apiFunctions"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import Image from "next/image"
@@ -14,6 +14,8 @@ export default function BookPage() {
     const { user, token, isAuthenticated } = useAuthStore()
     const { book, loading, error, getBook } = useBook(id as string)
     const { comments, loading: commentsLoading, error: commentsError, getComments } = useComments()
+    const { addSeen, loading: addSeenLoading, error: addSeenError } = useUserAddSeen()
+    const { removeSeen, loading: removeSeenLoading, error: removeSeenError } = useUserRemoveSeen()
 
     const [newComment, setNewComment] = useState("")
     const [isRatingMode, setIsRatingMode] = useState(false)
@@ -26,12 +28,17 @@ export default function BookPage() {
     const { addComment, loading: addCommentLoading, error: addCommentError, fieldErrors } = useAddComment()
 
     useEffect(() => {
-        getBook()
-        getComments(false, true, id as string)
-    }, [id])
+        if (token && id) {
+            getBook(token);
+            getComments(false, true, id as string);
+            setIsSeen(book?.is_seen || false)
+        }
+    }, [id, token]);
 
-    console.table(book)
-    console.table(comments)
+    useEffect(() => {
+        setIsSeen(book?.is_seen || false)
+    }, [book]);
+
     const handleStarClick = (rating: number) => {
         if (isRatingMode) {
             setUserRating(rating)
@@ -61,11 +68,6 @@ export default function BookPage() {
         console.log(`Book ${isFavorite ? 'removed from' : 'added to'} favorites: ${book?.title}`)
     }
 
-    const handleToggleSeen = () => {
-        setIsSeen(!isSeen)
-        console.log(`Book ${isSeen ? 'marked as not read' : 'marked as read'}: ${book?.title}`)
-    }
-
     const handleSubmitComment = async (e: React.FormEvent) => {
         e.preventDefault()
         if (newComment.trim() && isAuthenticated) {
@@ -75,6 +77,18 @@ export default function BookPage() {
                 setNewComment("")
             } catch (error) {
                 console.error("Error submitting comment:", error)
+            }
+        }
+    }
+
+    const handleAddSeen = async (isSeen: boolean) => {
+        if (isAuthenticated) {
+            if (isSeen) {
+                await removeSeen(book?.seen_id || 0, token || "")
+                setIsSeen(false)
+            } else {
+                await addSeen(null, book?.id || 0, token || "")
+                setIsSeen(true)
             }
         }
     }
@@ -197,7 +211,7 @@ export default function BookPage() {
                         <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
-                            onClick={handleToggleSeen}
+                            onClick={() => handleAddSeen(isSeen || false)}
                             className={`p-2 rounded-full transition-colors duration-300 ${isSeen ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-700/30 text-gray-400'
                                 }`}
                             title={isSeen ? "Mark as not read" : "Mark as read"}
@@ -212,6 +226,7 @@ export default function BookPage() {
                             className={`p-2 rounded-full transition-colors duration-300 ${isFavorite ? 'bg-red-500/20 text-red-400' : 'bg-gray-700/30 text-gray-400'
                                 }`}
                             title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                            disabled={loading}
                         >
                             {isFavorite ? <Heart size={20} /> : <HeartOff size={20} />}
                         </motion.button>

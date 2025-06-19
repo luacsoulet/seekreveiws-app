@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAuthStore, User } from '@/store/AuthStore'
-import { Book, Comment, Movie } from './types'
+import { Book, Comment, Favorites, Movie, Seen } from './types'
 
 
 export const handleApiError = (type: string, response: Response) => {
@@ -233,12 +233,16 @@ export function useBook(id: string) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
-    const getBook = async () => {
+    const getBook = async (token: string) => {
         setLoading(true)
         setError(null)
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books/${id}`)
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books/${id}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
             const data = await response.json()
 
             handleApiError("book", response)
@@ -261,12 +265,16 @@ export function useMovie(id: string) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
-    const getMovie = async () => {
+    const getMovie = async (token: string) => {
         setLoading(true)
         setError(null)
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/movies/${id}`)
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/movies/${id}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
             const data = await response.json()
 
             handleApiError("movie", response)
@@ -462,4 +470,101 @@ export const useUser = () => {
     }
 
     return { user, loading, error, getUser }
+}
+
+export const useUserSeen = () => {
+    const [seen, setSeen] = useState<Seen[]>([])
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+
+    const getUserSeen = async (id: string) => {
+        setLoading(true)
+        setError(null)
+
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${id}/seen`)
+            const data = await response.json()
+
+            handleApiError("seen", response)
+
+            setSeen(data)
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Error while fetching seen'
+            setError(errorMessage)
+            throw err
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return { seen, loading, error, getUserSeen }
+}
+
+export const useUserAddSeen = () => {
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+
+    const addSeen = async (movieId: number | null, bookId: number | null, token: string) => {
+        setLoading(true)
+        setError(null)
+
+        let body: { movie_id?: number, book_id?: number } = {}
+
+        if (bookId) body.book_id = bookId
+        if (movieId) body.movie_id = movieId
+
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/seen`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(body)
+            })
+
+            const data = await response.json()
+
+            handleApiError("seen", response)
+
+            return data
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Error while adding seen'
+            setError(errorMessage)
+            throw err
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return { addSeen, loading, error }
+}
+export const useUserRemoveSeen = () => {
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+
+
+    const removeSeen = async (seenId: number, token: string) => {
+        setLoading(true)
+        setError(null)
+
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/seen/${seenId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+            })
+
+            handleApiError("seen", response)
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Error while removing seen'
+            setError(errorMessage)
+            throw err
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return { removeSeen, loading, error }
 }
