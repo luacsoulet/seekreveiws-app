@@ -7,7 +7,7 @@ import Image from "next/image"
 import { motion, AnimatePresence, Variants } from "framer-motion"
 import { Star, Loader2, Eye, EyeOff, Heart, HeartOff, Send, MessageSquare } from "lucide-react"
 import { useAuthStore } from "@/store/AuthStore"
-import { Comment } from "@/component/Comment"
+import { CommentSection } from "@/component/CommentSection"
 
 export default function BookPage() {
     const { id } = useParams()
@@ -70,9 +70,7 @@ export default function BookPage() {
         e.preventDefault()
         if (newComment.trim() && isAuthenticated) {
             try {
-                console.log(null, book?.id, user?.id, newComment, token)
                 await addComment(null, book?.id || null, user?.id || 0, newComment, token || "")
-                console.log("Comment added")
                 getComments(false, true, id as string)
                 setNewComment("")
             } catch (error) {
@@ -317,61 +315,18 @@ export default function BookPage() {
                 </motion.div>
             </div>
 
-            <motion.div
-                variants={itemVariants}
-                className="w-full max-w-6xl mt-12 bg-gray-200/10 backdrop-blur-sm rounded-lg p-8"
-            >
-                <div className="flex items-center gap-3 mb-6">
-                    <MessageSquare className="text-blue-400" />
-                    <h2 className="text-2xl font-bold text-white">Comments</h2>
-                </div>
-
-                {isAuthenticated && (
-                    <>
-                        <form onSubmit={handleSubmitComment} className="mb-8">
-                            <div className="flex flex-col md:flex-row gap-3">
-                                <input
-                                    type="text"
-                                    value={newComment}
-                                    onChange={(e) => setNewComment(e.target.value)}
-                                    placeholder="Write your comment here..."
-                                    className="flex-1 bg-gray-800/50 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                                <motion.button
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    type="submit"
-                                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-6 py-3 flex items-center gap-2 transition-colors duration-200"
-                                    disabled={!newComment.trim()}
-                                >
-                                    <Send size={18} />
-                                    <span>Send</span>
-                                </motion.button>
-                            </div>
-                        </form>
-                    </>
-                )}
-
-                <div className="space-y-4">
-                    {commentsLoading ? (
-                        <div className="flex justify-center py-8">
-                            <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
-                        </div>
-                    ) : commentsError ? (
-                        <div className="bg-red-500/20 text-red-300 p-4 rounded-lg">
-                            Error loading comments
-                        </div>
-                    ) : comments && comments.length > 0 ? (
-                        comments.map((comment) => (
-                            <Comment key={comment.id} comment={comment} />
-                        ))
-                    ) : (
-                        <div className="text-center py-8 text-gray-400">
-                            No comments yet. Be the first to share your thoughts!
-                        </div>
-                    )}
-                </div>
-            </motion.div>
+            <CommentSection
+                comments={comments || []}
+                commentsLoading={commentsLoading}
+                commentsError={commentsError || ""}
+                handleSubmitComment={handleSubmitComment}
+                newComment={newComment}
+                setNewComment={setNewComment}
+                isAuthenticated={isAuthenticated}
+                itemVariants={itemVariants}
+                addCommentLoading={addCommentLoading}
+                addCommentError={addCommentError}
+            />
         </motion.div>
     )
 }
