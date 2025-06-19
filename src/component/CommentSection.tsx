@@ -1,5 +1,5 @@
 import { motion, Variants } from "framer-motion"
-import { MessageSquare, Send, Loader2 } from "lucide-react"
+import { MessageSquare, Send, Loader2, AlertCircle } from "lucide-react"
 import { Comment } from "@/component/Comment"
 import { Comment as CommentType } from "@/utils/types"
 
@@ -14,6 +14,7 @@ export type CommentSectionProps = {
     itemVariants: Variants,
     addCommentLoading?: boolean,
     addCommentError?: string | null,
+    fieldErrors?: Record<string, string>
 }
 
 export const CommentSection = ({
@@ -26,7 +27,8 @@ export const CommentSection = ({
     isAuthenticated,
     itemVariants,
     addCommentLoading = false,
-    addCommentError = null
+    addCommentError = null,
+    fieldErrors = {}
 }: CommentSectionProps) => {
     return (
         <motion.div
@@ -42,15 +44,22 @@ export const CommentSection = ({
                 <>
                     <form onSubmit={handleSubmitComment} className="mb-8">
                         <div className="flex flex-col md:flex-row gap-3">
-                            <input
-                                type="text"
-                                value={newComment}
-                                onChange={(e) => setNewComment(e.target.value)}
-                                placeholder="Write your comment here..."
-                                className="flex-1 bg-gray-800/50 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                autoComplete="on"
-                                disabled={addCommentLoading}
-                            />
+                            <div className="flex-1 flex flex-col">
+                                <input
+                                    type="text"
+                                    value={newComment}
+                                    onChange={(e) => setNewComment(e.target.value)}
+                                    placeholder="Write your comment here..."
+                                    className={`w-full bg-gray-800/50 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 ${fieldErrors.message ? 'border border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'}`}
+                                    autoComplete="on"
+                                    disabled={addCommentLoading}
+                                />
+                                {fieldErrors.message && (
+                                    <span className="text-red-400 text-sm mt-1 flex items-center">
+                                        <AlertCircle size={14} className="mr-1" /> {fieldErrors.message}
+                                    </span>
+                                )}
+                            </div>
                             <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
@@ -73,8 +82,23 @@ export const CommentSection = ({
                         </div>
 
                         {addCommentError && (
-                            <div className="mt-3 p-3 bg-red-500/20 text-red-300 rounded-lg text-sm">
-                                {addCommentError}
+                            <div className="mt-3 p-3 bg-red-500/20 text-red-300 rounded-lg text-sm flex items-center">
+                                <AlertCircle size={16} className="mr-2" />
+                                <span>{addCommentError}</span>
+                            </div>
+                        )}
+
+                        {(fieldErrors.token || fieldErrors.userId || fieldErrors.id) && (
+                            <div className="mt-3 p-3 bg-amber-500/20 text-amber-300 rounded-lg text-sm">
+                                <div className="flex items-center mb-1">
+                                    <AlertCircle size={16} className="mr-2" />
+                                    <span className="font-medium">Attention requise</span>
+                                </div>
+                                <ul className="list-disc ml-6 space-y-1">
+                                    {fieldErrors.token && <li>{fieldErrors.token}</li>}
+                                    {fieldErrors.userId && <li>{fieldErrors.userId}</li>}
+                                    {fieldErrors.id && <li>{fieldErrors.id}</li>}
+                                </ul>
                             </div>
                         )}
                     </form>
@@ -87,8 +111,9 @@ export const CommentSection = ({
                         <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
                     </div>
                 ) : commentsError ? (
-                    <div className="bg-red-500/20 text-red-300 p-4 rounded-lg">
-                        {commentsError || "Error loading comments"}
+                    <div className="bg-red-500/20 text-red-300 p-4 rounded-lg flex items-center">
+                        <AlertCircle size={20} className="mr-2" />
+                        <span>{commentsError || "Error loading comments"}</span>
                     </div>
                 ) : comments && comments.length > 0 ? (
                     comments.map((comment) => (
