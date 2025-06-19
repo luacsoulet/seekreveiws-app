@@ -30,7 +30,7 @@ export const NavBar = () => {
     }, [lastScrollY]);
 
     return (
-        <div className={`navbar flex justify-between items-center p-4 w-[calc(100%-40px)] shadow-lg mb-4 fixed top-2 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 rounded-lg ${isVisible ? 'translate-y-0' : '-translate-y-[200%]'
+        <div className={`navbar flex justify-between items-center p-4 w-[calc(100%-40px)] mb-4 fixed top-2 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 rounded-lg ${isVisible ? 'translate-y-0' : '-translate-y-[200%]'
             }`}>
             <div>
                 <Link href="/" className="flex text-2xl backdrop-blur-sm p-4 rounded-full hover:scale-110 hover:text-bold active:scale-95 transition-all duration-300">SeekReviews</Link>
