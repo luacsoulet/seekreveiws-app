@@ -257,7 +257,9 @@ export const useComments = () => {
         setError(null)
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/comments/${movie ? "movie" : "book"}?${movie ? "movie_id" : "book_id"}=${id}`)
+            const endpoint = movie ? "movie" : "book";
+            const paramName = movie ? "movie_id" : "book_id";
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/comments/${endpoint}?${paramName}=${id}`)
             const data = await response.json()
 
             if (!response.ok) {
@@ -286,41 +288,71 @@ export const useAddComment = () => {
         setError(null)
 
         try {
+            if (!token) {
+                setError("Authentication token is missing");
+                setLoading(false);
+                return;
+            }
+
+            if (!userId) {
+                setError("User ID is missing");
+                setLoading(false);
+                return;
+            }
+
+            if (!message.trim()) {
+                setError("Comment message cannot be empty");
+                setLoading(false);
+                return;
+            }
+
+            if (!bookId && !movieId) {
+                setError("Either book ID or movie ID must be provided");
+                setLoading(false);
+                return;
+            }
+
+            const url = `${process.env.NEXT_PUBLIC_API_URL}/comments`;
+            let body;
 
             if (bookId) {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/comments`, {
+                body = { book_id: bookId, user_id: userId, message: message };
+
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ book_id: bookId, user_id: userId, message: message })
-                })
+                    body: JSON.stringify(body)
+                });
 
-                const data = await response.json()
+                const data = await response.json();
 
                 if (!response.ok) {
-                    throw new Error(data.message || 'Error while adding comment')
+                    throw new Error(data.message || 'Error while adding comment');
                 }
 
-                return data
+                return data;
             } else if (movieId) {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/comments`, {
+                body = { movie_id: movieId, user_id: userId, message: message };
+
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ movie_id: movieId, user_id: userId, message: message })
-                })
+                    body: JSON.stringify(body)
+                });
 
-                const data = await response.json()
+                const data = await response.json();
 
                 if (!response.ok) {
-                    throw new Error(data.message || 'Error while adding comment')
+                    throw new Error(data.message || 'Error while adding comment');
                 }
 
-                return data
+                return data;
             }
 
         } catch (err) {
