@@ -1,15 +1,20 @@
 "use client"
 
-import { useBook } from "@/utils/apiFunctions"
+import { useBook, useAddComment, useComments } from "@/utils/apiFunctions"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import Image from "next/image"
 import { motion, AnimatePresence, Variants } from "framer-motion"
-import { Star, Loader2, Eye, EyeOff, Heart, HeartOff } from "lucide-react"
+import { Star, Loader2, Eye, EyeOff, Heart, HeartOff, Send, MessageSquare } from "lucide-react"
+import { useAuthStore } from "@/store/AuthStore"
 
 export default function BookPage() {
     const { id } = useParams()
+    const { user, token, isAuthenticated } = useAuthStore()
     const { book, loading, error, getBook } = useBook(id as string)
+    const { comments, loading: commentsLoading, error: commentsError, getComments } = useComments()
+
+    const [newComment, setNewComment] = useState("")
     const [isRatingMode, setIsRatingMode] = useState(false)
     const [userRating, setUserRating] = useState(0)
     const [hoveredStar, setHoveredStar] = useState(0)
@@ -17,10 +22,15 @@ export default function BookPage() {
     const [isFavorite, setIsFavorite] = useState(false)
     const [isSeen, setIsSeen] = useState(false)
 
+    const { addComment, loading: addCommentLoading, error: addCommentError } = useAddComment()
+
     useEffect(() => {
         getBook()
+        getComments(false, true, id as string)
     }, [id])
 
+    console.table(book)
+    console.table(comments)
     const handleStarClick = (rating: number) => {
         if (isRatingMode) {
             setUserRating(rating)
@@ -53,6 +63,21 @@ export default function BookPage() {
     const handleToggleSeen = () => {
         setIsSeen(!isSeen)
         console.log(`Book ${isSeen ? 'marked as not read' : 'marked as read'}: ${book?.title}`)
+    }
+
+    const handleSubmitComment = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (newComment.trim() && isAuthenticated) {
+            try {
+                console.log(null, book?.id, user?.id, newComment, token)
+                await addComment(null, book?.id || null, user?.id || 0, newComment, token || "")
+                console.log("Comment added")
+                getComments(false, true, id as string)
+                setNewComment("")
+            } catch (error) {
+                console.error("Error submitting comment:", error)
+            }
+        }
     }
 
     const renderStars = () => {
@@ -144,7 +169,7 @@ export default function BookPage() {
             initial="hidden"
             animate="visible"
             variants={containerVariants}
-            className="flex items-center justify-center min-h-screen p-8"
+            className="flex flex-col items-center min-h-screen p-8 mt-40"
         >
             <div className="flex gap-8 max-w-6xl w-full items-center">
                 <motion.div
@@ -290,6 +315,80 @@ export default function BookPage() {
                     </div>
                 </motion.div>
             </div>
+
+            <motion.div
+                variants={itemVariants}
+                className="w-full max-w-6xl mt-12 bg-gray-200/10 backdrop-blur-sm rounded-lg p-8"
+            >
+                <div className="flex items-center gap-3 mb-6">
+                    <MessageSquare className="text-blue-400" />
+                    <h2 className="text-2xl font-bold text-white">Comments</h2>
+                </div>
+
+                {isAuthenticated && (
+                    <>
+                        <form onSubmit={handleSubmitComment} className="mb-8">
+                            <div className="flex flex-col md:flex-row gap-3">
+                                <input
+                                    type="text"
+                                    value={newComment}
+                                    onChange={(e) => setNewComment(e.target.value)}
+                                    placeholder="Write your comment here..."
+                                    className="flex-1 bg-gray-800/50 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                                <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    type="submit"
+                                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-6 py-3 flex items-center gap-2 transition-colors duration-200"
+                                    disabled={!newComment.trim()}
+                                >
+                                    <Send size={18} />
+                                    <span>Send</span>
+                                </motion.button>
+                            </div>
+                        </form>
+                    </>
+                )}
+
+                <div className="space-y-4">
+                    {commentsLoading ? (
+                        <div className="flex justify-center py-8">
+                            <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+                        </div>
+                    ) : commentsError ? (
+                        <div className="bg-red-500/20 text-red-300 p-4 rounded-lg">
+                            Error loading comments
+                        </div>
+                    ) : comments && comments.length > 0 ? (
+                        comments.map((comment) => (
+                            <motion.div
+                                key={comment.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="bg-gray-800/30 rounded-lg p-4"
+                            >
+                                <div className="flex justify-between items-start mb-2">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
+                                            {comment.user_id?.toString().charAt(0) || "U"}
+                                        </div>
+                                        <span className="font-medium text-white">{comment.user_id?.toString() || "Anonymous"}</span>
+                                    </div>
+                                    <span className="text-gray-400 text-sm">
+                                        {new Date(comment.created_at).toLocaleDateString()}
+                                    </span>
+                                </div>
+                                <p className="text-gray-300">{comment.message}</p>
+                            </motion.div>
+                        ))
+                    ) : (
+                        <div className="text-center py-8 text-gray-400">
+                            No comments yet. Be the first to share your thoughts!
+                        </div>
+                    )}
+                </div>
+            </motion.div>
         </motion.div>
     )
 }
